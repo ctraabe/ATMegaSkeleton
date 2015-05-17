@@ -6,19 +6,10 @@
 // ============================================================================+
 // Private data:
 
-volatile uint16_t ms_timestamp_ = 0;
+#define TIMER0_DIVIDER (64)
+#define F_OCR0A (1000)
 
-enum Timer0ClockSource
-{
-  CS0_NONE   = 0<<CS02 | 0<<CS01 | 0<<CS00,  // No clock source.
-  CS0_PS0    = 0<<CS02 | 0<<CS01 | 1<<CS00,  // clk I/O / 1.
-  CS0_PS8    = 0<<CS02 | 1<<CS01 | 0<<CS00,  // clk I/O / 8.
-  CS0_PS64   = 0<<CS02 | 1<<CS01 | 1<<CS00,  // clk I/O / 64.
-  CS0_PS256  = 1<<CS02 | 0<<CS01 | 0<<CS00,  // clk I/O / 256.
-  CS0_PS1024 = 1<<CS02 | 0<<CS01 | 1<<CS00,  // clk I/O / 1024.
-  CS0_EXTF   = 1<<CS02 | 1<<CS01 | 0<<CS00,  // External clock on T0 falling.
-  CS0_EXTR   = 1<<CS02 | 1<<CS01 | 1<<CS00,  // External clock on T0 rising.
-};
+volatile uint16_t ms_timestamp_ = 0;
 
 
 // ============================================================================+
@@ -47,12 +38,33 @@ void Timer0Init(void)
   // Force output compare B bit:
   TCCR0B |= (0 << FOC0B);
   // Clock select bits:
-  TCCR0B |= CS0_PS64;
+  switch (TIMER0_DIVIDER)
+  {
+    case 1:
+      TCCR0B |= 0<<CS02 | 0<<CS01 | 1<<CS00;
+      break;
+    case 8:
+      TCCR0B |= 0<<CS02 | 1<<CS01 | 0<<CS00;
+      break;
+    case 64:
+      TCCR0B |= 0<<CS02 | 1<<CS01 | 1<<CS00;
+      break;
+    case 256:
+      TCCR0B |= 1<<CS02 | 0<<CS01 | 0<<CS00;
+      break;
+    case 1024:
+      TCCR0B |= 1<<CS02 | 0<<CS01 | 1<<CS00;
+      break;
+    case 0:
+    default:
+      TCCR0B |= 0<<CS02 | 0<<CS01 | 0<<CS00;
+      break;
+  }
   // Overflow interrupt enable bit:
   TIMSK0 |= (0 << TOIE0);
   // Output compare match A
   TIMSK0 |= (1 << OCIE0A);  // Output compare match interrupt enable.
-  OCR0A = 250;  // Output compare register.
+  OCR0A = F_CPU / TIMER0_DIVIDER / F_OCR0A;  // Output compare register.
   // Output compare match B
   TIMSK0 |= (0 << OCIE0B);  // Output compare match interrupt enable.
   OCR0B = 0;  // Output compare register.
@@ -66,6 +78,6 @@ void Timer0Init(void)
 // time periods up to 32767 ms.
 void Wait(uint16_t w)
 {
-  uint16_t timestamp = SetDelay(w);
-  while (!CheckDelay(timestamp));
+  uint16_t timestamp = GetTimestampMillisFromNow(w);
+  while (!TimestampInPast(timestamp));
 }

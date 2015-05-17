@@ -5,9 +5,9 @@
 
 void Timer0Init(void);
 
-uint16_t SetDelay (uint16_t t);
-uint8_t CheckDelay (uint16_t t);
-uint16_t GetDelay(uint16_t *last_time);
+uint16_t GetTimestampMillisFromNow(uint16_t t);
+uint8_t TimestampInPast(uint16_t t);
+uint16_t MillisSinceTimestamp(uint16_t *last_time);
 
 void Wait(uint16_t);
 

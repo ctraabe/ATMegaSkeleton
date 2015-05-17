@@ -15,10 +15,10 @@ int16_t main(void)
   sei();  // Enable interrupts
 
   // Main loop
-  uint16_t timer = SetDelay(250);
+  uint16_t timer = GetTimestampMillisFromNow(250);
   for (;;)  // Preferred over while(1)
   {
-    while(!CheckDelay(timer)) continue;
+    while(!TimestampInPast(timer)) continue;
     timer += 250;
     ARDUINO_LED_TOGGLE;
   }

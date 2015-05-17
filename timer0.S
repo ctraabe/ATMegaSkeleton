@@ -26,7 +26,7 @@
 ; I'm not sure if this is the right thing to do. The .lst files that come from c
 ; files have __SREG__ hard-coded to an address (0x3f). I don't know where that
 ; comes from and whether or not it is device specific. This might be more
-; generic.
+; generic:
 __SREG__ = _SFR_IO_ADDR(SREG)
 
 ; This interrupt handler increments a 16-bit word every time TIMER0 reaches the
@@ -68,11 +68,11 @@ __SREG__ = _SFR_IO_ADDR(SREG)
 ; store SREG and then pop it's contents back after we're done (4 cycles) it is
 ; better to use R1 and then just clear it when we're done (1 cycle).
 ; Unfortunately, this is not feasible since the clr instruction sets the Z flag
-; in SREG, thereby defeating the goal of preserving SREGthe ldi instruction does
-; not, but ldi can only be used with register R16-R31. To get around this, I
-; decided to copy (mov) R1 to R26 once R26 was not needed anymore, clear R1,
-; then copy R26 to SREG. This mov adds an extra cycle, but it is still faster
-; than pushing and popping by 2 cycles.
+; in SREG, thereby defeating the goal of preserving SREG. The ldi instruction
+; does not set the z flag, but ldi can only be used with register R16-R31. To
+; get around this, I decided to copy (mov) R1 to R26 once R26 was not needed
+; anymore, clear R1, then copy R26 to SREG. This mov adds an extra cycle, but it
+; is still faster than pushing and popping by 2 cycles.
 .global TIMER0_COMPA_vect
 TIMER0_COMPA_vect:
   in r1, __SREG__  ; Save SREG in R1 (normally reserved for 0)
@@ -95,14 +95,15 @@ MS_HI:
   pop r27  ; Restore R27 (X+) from the stack
   rjmp MS_SAVE  ; Jump back to save lower byte
 
-; uint16_t SetDelay (uint16_t t);
+; uint16_t GetTimestampMillisFromNow(uint16_t t);
 ;;
 ; This function returns a timestamp corresponding to "t" ms in the future. This
 ; timestamp can be checked against the current timestamp to see if a certain
 ; amount of time has passed. This function works for delays up to 32767 ms.
 ;;
-; Note that ms_timestamp_ could be updated by interrupt between the 2 load (lds)
-; instructions, giving unexpected results. Interrupts are disabled and re-
+; Note that the TIMER0_COMPA interrupt might occur between the 2 load (lds)
+; instructions. This could update the high part of ms_timestamp_ after it has
+; been loaded in r26, giving unexpected results. Interrupts are disabled and re-
 ; enabled to avoid this.
 ;;
 ; Note that parameters are passed to functions in chunks not smaller than
@@ -115,8 +116,8 @@ MS_HI:
 ; Note that in this case the input and output are the same registers, so the
 ; timestamp can be subtracted from the input in place and doesn't require any
 ; subsequent move.
-.global SetDelay
-SetDelay:
+.global GetTimestampMillisFromNow
+GetTimestampMillisFromNow:
   cli
   lds r26, ms_timestamp_
   lds r27, ms_timestamp_ + 1
@@ -126,7 +127,7 @@ SetDelay:
   adc r25, r27
   ret
 
-; int8_t CheckDelay (uint16_t t);
+; int8_t TimestampInPast(uint16_t t);
 ;;
 ; This function compares a timestamp to the current timestamp and returns a 1 if
 ; the timestamp is in the past. This function works for delays up to 32767 ms.
@@ -140,8 +141,8 @@ SetDelay:
 ;;
 ; Subtract the current timestamp from the target timestamp. If the result is
 ; negative, then the target timestamp should have elapsed.
-.global CheckDelay
-CheckDelay:
+.global TimestampInPast
+TimestampInPast:
   cli
   lds r26, ms_timestamp_
   lds r27, ms_timestamp_ + 1
@@ -153,14 +154,14 @@ CheckDelay:
   ldi r24, 0x00  ; Set the return value to 0
   ret
 
-; uint16_t GetDelay(uint16_t *last_time);
+; uint16_t MillisSinceTimestamp(uint16_t *last_time);
 ;;
 ; This function returns the amount of time that has elapsed since the timestamp
 ; "last_time" has occurred. This function works for time periods up to 32767 ms.
 ; The function also automatically updates last_time so that it can be easily be
 ; called periodically.
-.global GetDelay
-GetDelay:
+.global MillisSinceTimestamp
+MillisSinceTimestamp:
   movw r30, r24  ; Copy address of "last_time" to the Z register pair (R31:30)
   cli
   lds r24, ms_timestamp_
