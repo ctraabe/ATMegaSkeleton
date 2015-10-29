@@ -1,38 +1,33 @@
 #include "timer0.h"
 
 #include <avr/io.h>
+#include <util/atomic.h>
 
 
-// ============================================================================+
+// =============================================================================
 // Private data:
 
 #define TIMER0_DIVIDER (64)
 #define F_OCR0A (1000)
 
+// The following is not declared static so that it will be visible to timer0.S.
 volatile uint16_t ms_timestamp_ = 0;
 
 
-// ============================================================================+
+// =============================================================================
 // Public functions:
 
 // This function initializes TIMER0. This timer triggers the interrupt "TIMER0
 // COMPA" at 1kHz.
 void Timer0Init(void)
 {
-  // Clear TIMER0 registers.
-  TCCR0A = 0;
-  TCCR0B = 0;
-  TIMSK0 = 0;
   // Waveform generation mode bits:
-  TCCR0B |= (0 << WGM02);
-  TCCR0A |= (1 << WGM01);
-  TCCR0A |= (0 << WGM00);
+  TCCR0B = (0 << WGM02) | (1 << WGM01);
+  TCCR0A = (0 << WGM00);
   // Compare match output A mode bits:
-  TCCR0A |= (0 << COM0A1);
-  TCCR0A |= (0 << COM0A0);
+  TCCR0A |= (0 << COM0A1) | (0 << COM0A0);
   // Compare match output B mode bits:
-  TCCR0B |= (0 << COM0B1);
-  TCCR0B |= (0 << COM0B0);
+  TCCR0B |= (0 << COM0B1) | (0 << COM0B0);
   // Force output compare A bit:
   TCCR0B |= (0 << FOC0A);
   // Force output compare B bit:
@@ -68,8 +63,48 @@ void Timer0Init(void)
   // Output compare match B
   TIMSK0 |= (0 << OCIE0B);  // Output compare match interrupt enable.
   OCR0B = 0;  // Output compare register.
-  // Clear the timer.
-  TCNT0 = 0;
+}
+
+// -----------------------------------------------------------------------------
+// This function returns the current timestamp.
+uint16_t GetTimestamp(void)
+{
+  uint16_t ms_timestamp;
+  ATOMIC_BLOCK(ATOMIC_FORCEON) { ms_timestamp = ms_timestamp_; }
+  return ms_timestamp;
+}
+
+// -----------------------------------------------------------------------------
+// This function returns a timestamp corresponding to "t" ms in the future. This
+// timestamp can be checked against the current timestamp to see if a certain
+// amount of time has passed. This function works for durations up to 65535 ms.
+uint16_t GetTimestampMillisFromNow(uint16_t t)
+{
+  uint16_t ms_timestamp;
+  ATOMIC_BLOCK(ATOMIC_FORCEON) { ms_timestamp = ms_timestamp_; }
+  return ms_timestamp + t + 1;
+}
+
+// -----------------------------------------------------------------------------
+// This function compares a timestamp to the current timestamp and returns TRUE
+// if the timestamp is in the past. This function works for durations up to
+// 32767 ms.
+uint8_t TimestampInPast(uint16_t t)
+{
+  int16_t ms_timestamp;
+  ATOMIC_BLOCK(ATOMIC_FORCEON) { ms_timestamp = (int16_t)ms_timestamp_; }
+  return ((int16_t)t - ms_timestamp) < 0;
+}
+
+// -----------------------------------------------------------------------------
+// This function returns the amount of time that has elapsed since the timestamp
+// "last_time" has occurred. This function works for time periods up to 65535
+// ms.
+uint16_t MillisSinceTimestamp(uint16_t t)
+{
+  uint16_t ms_timestamp;
+  ATOMIC_BLOCK(ATOMIC_FORCEON) { ms_timestamp = ms_timestamp_; }
+  return ms_timestamp - t;
 }
 
 // -----------------------------------------------------------------------------
