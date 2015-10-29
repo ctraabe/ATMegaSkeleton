@@ -1,8 +1,9 @@
 TARGET := $(notdir $(shell pwd))
 
+BOARD  := ArduinoMega
 # BOARD  := ArduinoMicro
 # BOARD  := ArduinoNano328p
-BOARD  := ArduinoNano168
+# BOARD  := ArduinoNano168
 
 DEPFLAGS  = -MM -MT '$(addprefix $(BUILD_PATH)/, $(<:.c=.o)) $@' $< -MF $@
 CFLAGS    = -c -g $(LDFLAGS)
@@ -19,7 +20,11 @@ CP     := avr-objcopy
 DUDE   := avrdude
 
 F_CPU  := 16000000L
-ifeq ($(BOARD), ArduinoMicro)
+ifeq ($(BOARD), ArduinoMega)
+  MCU  := atmega2560
+  BAUD := 57600
+  PINS := ArduinoMega
+else ifeq ($(BOARD), ArduinoMicro)
   MCU  := atmega32u4
   BAUD := 57600
   PINS := ArduinoMicro
