@@ -5,6 +5,10 @@ BOARD  := ArduinoMega
 # BOARD  := ArduinoNano328p
 # BOARD  := ArduinoNano168
 
+# PROGRAMMER := avrisp2
+PROGRAMMER := stk500 -P /dev/ttyUSB0
+# PROGRAMMER := atmelice_isp
+
 DEPFLAGS  = -MM -MT '$(addprefix $(BUILD_PATH)/, $(<:.c=.o)) $@' $< -MF $@
 CFLAGS    = -c -g $(LDFLAGS)
 CCFLAGS   = -std=gnu99 -Wstrict-prototypes
@@ -103,7 +107,7 @@ endif
 
 # Target to program the board
 program: $(HEX)
-	$(DUDE) -c avrisp2 -p $(MCU) -U flash:w:$(HEX):i
+	$(DUDE) -c $(PROGRAMMER) -p $(MCU) -U flash:w:$(HEX):i
 # ifeq ($(MCU),atmega32u4)
 # 	$(DUDE) -C/usr/share/arduino/hardware/tools/avrdude.conf -p$(MCU) \
 # 	-cavr109 -P/dev/ttyACM0 -b$(BAUD) -D -Uflash:w:$(HEX):i
