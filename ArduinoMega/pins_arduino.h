@@ -25,8 +25,6 @@
 #ifndef PINS_ARDUINO_H
 #define PINS_ARDUINO_H
 
-#include <avr/pgmspace.h>
-
 #define NUM_DIGITAL_PINS            70
 #define NUM_ANALOG_INPUTS           16
 #define analogInputToDigitalPin(p)  ((p < 16) ? (p) + 54 : -1)
@@ -40,7 +38,7 @@ static const uint8_t SCK  = 52;
 
 static const uint8_t SDA = 20;
 static const uint8_t SCL = 21;
-static const uint8_t LED_BUILTIN = 13;
+#define LED_BUILTIN 13
 
 static const uint8_t A0 = 54;
 static const uint8_t A1 = 55;
@@ -85,6 +83,8 @@ static const uint8_t A15 = 69;
                                 0 ) ) ) ) ) )
 
 #define digitalPinToInterrupt(p) ((p) == 2 ? 0 : ((p) == 3 ? 1 : ((p) >= 18 && (p) <= 21 ? 23 - (p) : NOT_AN_INTERRUPT)))
+
+#ifdef ARDUINO_MAIN
 
 const uint16_t PROGMEM port_to_mode_PGM[] = {
   NOT_A_PORT,
@@ -358,5 +358,7 @@ const uint8_t PROGMEM digital_pin_to_timer_PGM[] = {
   NOT_ON_TIMER  , // PK 6 ** 68 ** A14  
   NOT_ON_TIMER  , // PK 7 ** 69 ** A15  
 };
+
+#endif  // ARDUINO_MAIN
 
 #endif  // PINS_ARDUINO_H_

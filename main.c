@@ -3,6 +3,8 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
+// Instantiate Arduino constants
+#define ARDUINO_MAIN
 #include "arduino.h"
 #include "timer0.h"
 

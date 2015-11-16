@@ -1,9 +1,9 @@
 TARGET := $(notdir $(shell pwd))
 
-BOARD  := ArduinoMega
+# BOARD  := ArduinoMega
 # BOARD  := ArduinoMicro
 # BOARD  := ArduinoNano328p
-# BOARD  := ArduinoNano168
+BOARD  := ArduinoNano168
 
 # PROGRAMMER := avrisp2
 PROGRAMMER := stk500 -P /dev/ttyUSB0
