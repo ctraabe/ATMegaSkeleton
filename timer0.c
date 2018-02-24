@@ -27,7 +27,7 @@ void Timer0Init(void)
   // Compare match output A mode bits:
   TCCR0A |= (0 << COM0A1) | (0 << COM0A0);
   // Compare match output B mode bits:
-  TCCR0B |= (0 << COM0B1) | (0 << COM0B0);
+  TCCR0A |= (0 << COM0B1) | (0 << COM0B0);
   // Force output compare A bit:
   TCCR0B |= (0 << FOC0A);
   // Force output compare B bit:
